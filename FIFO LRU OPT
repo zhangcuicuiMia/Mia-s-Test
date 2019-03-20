@@ -1,0 +1,281 @@
+#include <iostream.h>
+
+#define Bsize 3
+#define Psize 12
+
+struct pageInfor
+{
+int content;//页面号
+int timer;//被访问标记
+};
+
+class PRA
+{
+public:
+     PRA(void);
+     int findSpace(void);//查找是否有空闲内存
+     int findExist(int curpage);//查找内存中是否有该页面
+     int findReplace(void);//查找应予置换的页面
+     void display(void);//显示
+     void FIFO(void);//FIFO算法
+     void LRU(void);//LRU算法
+     void Optimal(void);//OPTIMAL算法
+     void BlockClear(void);//BLOCK恢复
+     pageInfor * block;//物理块
+     pageInfor * page;//页面号串
+
+private:
+
+};
+
+
+PRA::PRA(void)
+{
+	int QString[12]={4,3,2,1,4,3,5,4,3,2,1,5};
+
+     block = new pageInfor[Bsize];
+	 for(int i=0; i<Bsize; i++)
+	 {
+		 block[i].content = -1;
+		 block[i].timer = 0;
+	 }
+
+	 page = new pageInfor[Psize];
+	 for(i=0; i<Psize; i++)
+	 {
+		 page[i].content = QString[i];
+		 page[i].timer = 0;
+	 }
+}
+
+
+int PRA::findSpace(void)
+{
+	for(int i=0; i<Bsize; i++)
+    if(block[i].content == -1)
+    return i;//找到空闲内存，返回BLOCK中位置
+	return -1;
+}
+
+int PRA::findExist(int curpage)
+{
+
+	for(int i=0; i<Bsize; i++)
+    if(block[i].content == page[curpage].content)
+    return i;//找到内存中有该页面，返回BLOCK中位置
+	return -1;
+}
+
+int PRA::findReplace(void)
+{
+	int pos = 0;
+	for(int i=0; i<Bsize; i++)
+		if(block[i].timer >= block[pos].timer)
+			pos = i;//找到应予置换页面，返回BLOCK中位置
+	return pos;
+}
+
+void PRA::display(void)
+{
+
+
+	for(int i=0; i<Bsize; i++)
+		if(block[i].content != -1)
+			cout<<block[i].content<<" ";
+		cout<<endl;
+}
+
+
+void PRA::FIFO(void)
+{
+	int exist,space,position,count=0;
+	for(int i=0; i<Psize; i++)
+	{
+  
+		exist = findExist(i);
+		if(exist != -1)
+		{
+			cout<<"不缺页"<<endl;
+			count++;
+		}
+		else
+		{   
+			space = findSpace();
+			if(space != -1)
+			{
+				block[space] = page[i];  
+				display();
+			}
+			else
+			{
+				position = findReplace();
+					if (position==2)
+				block[position] = page[i];
+				if(position==1)
+				{
+					block[1]=block[2];
+					block[2]=page[i];
+				}
+				if(position==0)
+				{
+					block[0]=block[1];
+					block[1]=block[2];
+					block[2]=page[i];
+				}
+ 
+				display();
+			}
+		}
+		for(int j=0; j<Bsize; j++)
+			block[j].timer++;//BLOCK中所有页面TIMER++
+	}
+	cout<<"缺页次数; "<<Psize-count<<endl;
+	cout<<"缺页率："<<(Psize-count)/12.00<<endl;
+}
+
+void PRA::LRU(void)
+{
+int exist,space,position,count=0;
+
+for(int i=0; i<Psize; i++)
+{
+   exist = findExist(i);
+   if(exist != -1)
+   {
+        cout<<"不缺页"<<endl;
+		block[exist].timer = -1;//恢复存在的并刚访问过的BLOCK中页面TIMER为-1
+		count++;
+   }
+   else
+   { 
+    space = findSpace();
+    if(space != -1)
+    {
+     block[space] = page[i]; 
+     display();
+    }
+    else
+    {
+     position = findReplace();
+     block[position] = page[i];  
+     display();
+    }
+   }
+   for(int j=0; j<Bsize; j++)
+    block[j].timer++;
+}
+cout<<"缺页次数; "<<Psize-count<<endl;
+cout<<"缺页率："<<(Psize-count)/12.00<<endl;
+}
+
+void PRA::Optimal(void)
+{
+int exist,space,position,count=0;
+
+for(int i=0; i<Psize; i++)
+{    
+   exist = findExist(i);
+   if(exist != -1)
+   { 
+	   cout<<"不缺页"<<endl; 
+	   count++;
+   }
+   else
+   {   
+    space = findSpace();
+    if(space != -1)
+    {
+     block[space] = page[i];  
+     display();
+    }
+    else
+    {
+      for(int k=0; k<Bsize; k++)
+     for(int j=i; j<Psize; j++)
+     {
+      if(block[k].content != page[j].content)
+      { block[k].timer = 1000; }//将来不会用，设置TIMER为一个很大数
+      else
+      {
+       block[k].timer = j;
+       break;
+      }
+     }
+     position = findReplace();   
+     	if (position==2)
+				block[position] = page[i];
+				if(position==1)
+				{
+					block[1]=block[2];
+					block[2]=page[i];
+				}
+				if(position==0)
+				{
+					block[0]=block[1];
+					block[1]=block[2];
+					block[2]=page[i];
+				}
+
+     display();
+    }
+   }
+}
+cout<<"缺页次数; "<<Psize-count<<endl;
+cout<<"缺页率："<<(Psize-count)/12.00<<endl;
+}
+
+void PRA::BlockClear(void)
+{
+	for(int i=0; i<Bsize; i++)
+	{
+		block[i].content = -1;
+		block[i].timer = 0;
+	}
+}
+
+
+void main(void)
+{
+	cout<<"|----------页 面 置 换 算 法----------|"<<endl;
+	cout<<"|-------------------------------------|"<<endl; 
+	cout<<"页面号引用串:4,3,2,1,4,3,5,4,3,2,1,5"<<endl;
+	cout<<"----------------------------------------------------"<<endl;
+	cout<<"选择<1>应用FIFO算法"<<endl;
+	cout<<"选择<2>应用LRU算法"<<endl;
+	cout<<"选择<3>应用Optimal算法"<<endl;
+	cout<<"选择<0>退出"<<endl;
+	int select;
+	PRA test;
+
+
+	while(select)
+	{
+		cin>>select;
+		switch(select){
+		case 0:
+			break;
+		case 1:
+			cout<<"FIFO算法结果如下:"<<endl;
+			test.FIFO();
+			test.BlockClear();
+			cout<<"----------------------"<<endl;
+			break;
+		case 2: 
+			cout<<"LRU算法结果如下:"<<endl;
+			test.LRU();
+			test.BlockClear();
+			cout<<"----------------------"<<endl;
+			break;
+		case 3:
+			cout<<"Optimal算法结果如下:"<<endl;
+			test.Optimal();
+			test.BlockClear();
+			cout<<"----------------------"<<endl;
+			break;
+		default:
+			cout<<"请输入正确功能号"<<endl;
+			break;
+	}
+	}
+}
+
